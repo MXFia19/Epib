@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convertisseur EPUB vers PDF</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 350px;
+        }
+        h1 { color: #333; font-size: 24px; margin-bottom: 20px; }
+        .upload-box {
+            border: 2px dashed #ccc;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        .upload-box:hover { border-color: #007bff; }
+        input[type="file"] { display: none; }
+        label { cursor: pointer; color: #555; display: block; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.3s;
+        }
+        button:hover { background-color: #0056b3; }
+        #status { margin-top: 15px; font-size: 14px; color: #666; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>📚 EPUB vers PDF</h1>
+    <form id="convertForm" action="/convert" method="POST" enctype="multipart/form-data">
+        <div class="upload-box" onclick="document.getElementById('epubFile').click()">
+            <input type="file" name="epubFile" id="epubFile" accept=".epub" required onchange="updateLabel()">
+            <label for="epubFile" id="fileLabel">Clique ici pour choisir un EPUB</label>
+        </div>
+        <button type="submit" id="btnSubmit">Convertir maintenant</button>
+    </form>
+    <div id="status"></div>
+</div>
+
+<script>
+    function updateLabel() {
+        const input = document.getElementById('epubFile');
+        const label = document.getElementById('fileLabel');
+        if (input.files.length > 0) {
+            label.textContent = "Fichier : " + input.files[0].name;
+            label.style.fontWeight = "bold";
+            label.style.color = "#007bff";
+        }
+    }
+
+    // Petit script pour gérer l'animation de chargement
+    document.getElementById('convertForm').onsubmit = function() {
+        const btn = document.getElementById('btnSubmit');
+        const status = document.getElementById('status');
+        btn.disabled = true;
+        btn.textContent = "Conversion en cours...";
+        btn.style.backgroundColor = "#ccc";
+        status.textContent = "Cela peut prendre quelques secondes...";
+    };
+</script>
+
+</body>
+</html>
