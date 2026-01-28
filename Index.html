@@ -2,161 +2,147 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Convertisseur Mobile EPUB > PDF</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convertisseur Cloud Mobile</title>
     <style>
-        /* Design adapté aux téléphones */
+        /* Un design propre et moderne pour mobile */
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f4f4f9;
-            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #eef2f5;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
+            margin: 0;
             padding: 20px;
-            box-sizing: border-box;
         }
 
         .card {
             background: white;
-            padding: 30px 20px;
+            padding: 2rem;
             border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             width: 100%;
-            max-width: 400px;
+            max-width: 350px;
             text-align: center;
         }
 
-        h1 { margin-top: 0; color: #333; font-size: 1.5rem; }
-        p { color: #666; font-size: 0.9rem; margin-bottom: 25px; }
-
-        .file-input-wrapper {
-            position: relative;
-            overflow: hidden;
-            display: inline-block;
-            width: 100%;
-            margin-bottom: 20px;
-        }
-
-        .btn-select {
-            border: 2px dashed #007bff;
-            color: #007bff;
-            background-color: #f0f8ff;
-            padding: 15px;
-            border-radius: 10px;
-            font-weight: bold;
-            display: block;
+        h2 { margin-top: 0; color: #2c3e50; }
+        
+        .upload-area {
+            border: 2px dashed #cbd5e0;
+            border-radius: 12px;
+            padding: 30px 20px;
+            margin: 20px 0;
+            background: #f8fafc;
             cursor: pointer;
+            transition: all 0.3s;
         }
 
-        input[type=file] {
-            font-size: 100px;
-            position: absolute;
-            left: 0;
-            top: 0;
-            opacity: 0;
-            cursor: pointer;
-            width: 100%;
-            height: 100%;
+        .upload-area.active {
+            border-color: #3498db;
+            background: #ebf8ff;
         }
 
-        button#convertBtn {
-            background-color: #007bff;
+        /* Masquer l'input file moche */
+        #fileInput { display: none; }
+
+        .btn {
+            background: #3498db;
             color: white;
             border: none;
-            padding: 15px;
-            width: 100%;
-            border-radius: 10px;
-            font-size: 1rem;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 16px;
             font-weight: bold;
+            width: 100%;
             cursor: pointer;
-            transition: background 0.3s;
+            box-shadow: 0 4px 6px rgba(52, 152, 219, 0.3);
+            transition: transform 0.1s;
         }
 
-        button#convertBtn:disabled { background-color: #ccc; }
+        .btn:active { transform: scale(0.98); }
+        .btn:disabled { background: #bdc3c7; box-shadow: none; }
 
-        #status { margin-top: 20px; font-size: 0.9rem; min-height: 20px; }
-        
-        .success-link {
-            display: block;
+        #status { margin-top: 20px; font-size: 14px; min-height: 20px; color: #7f8c8d; }
+
+        .download-link {
+            display: inline-block;
             margin-top: 15px;
-            background-color: #28a745;
-            color: white;
+            color: #27ae60;
             text-decoration: none;
-            padding: 15px;
-            border-radius: 10px;
             font-weight: bold;
+            border: 2px solid #27ae60;
+            padding: 10px 20px;
+            border-radius: 50px;
         }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h1>📱 EPUB vers PDF</h1>
-    <p>Convertis tes livres directement depuis ton téléphone.</p>
+    <h2>⚡ Convertisseur Rapide</h2>
+    <p>Transforme tes EPUB en PDF grâce au Cloud.</p>
 
-    <div class="file-input-wrapper">
-        <div class="btn-select" id="labelFile">Taper ici pour choisir un fichier</div>
-        <input type="file" id="fileInput" accept=".epub">
+    <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()">
+        <span style="font-size: 40px;">📚</span>
+        <p id="fileName">Touche ici pour choisir un fichier</p>
     </div>
-
-    <input type="text" id="apiKey" placeholder="Colle ta clé secrète ici" style="width: 100%; padding: 10px; margin-bottom: 15px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 8px; display:none;"> 
     
-    <button id="convertBtn" onclick="convertir()">Convertir maintenant</button>
+    <input type="file" id="fileInput" accept=".epub">
+
+    <button class="btn" id="convertBtn" onclick="convertir()" disabled>Convertir</button>
     
     <div id="status"></div>
 </div>
 
 <script>
-    // ⚠️ IMPORTANT : Remplace 'TON_SECRET_ICI' par ta clé gratuite ConvertAPI
-    // Tu peux en avoir une gratuite sur https://www.convertapi.com/
-    const MA_CLE_SECRETE = 'd2ITJqf65NNhFvJwHCFmHI3G5YYBrHuv'; 
+    // --- CONFIGURATION ---
+    // 1. Va sur https://www.convertapi.com/ (Inscription gratuite)
+    // 2. Copie ta "Secret Key" et colle-la ci-dessous entre les guillemets
+    const API_SECRET = 'TA_CLE_SECRETE_ICI'; 
+    // ---------------------
 
     const fileInput = document.getElementById('fileInput');
-    const labelFile = document.getElementById('labelFile');
-    const statusDiv = document.getElementById('status');
+    const fileName = document.getElementById('fileName');
+    const dropZone = document.getElementById('dropZone');
     const btn = document.getElementById('convertBtn');
+    const status = document.getElementById('status');
 
-    // Mettre à jour le texte quand on choisit un fichier
+    // Quand on choisit un fichier
     fileInput.addEventListener('change', function() {
-        if (this.files && this.files[0]) {
-            labelFile.innerHTML = "📄 " + this.files[0].name;
-            labelFile.style.borderStyle = "solid";
-            labelFile.style.backgroundColor = "#e8f0fe";
+        if (this.files[0]) {
+            fileName.innerText = this.files[0].name;
+            dropZone.classList.add('active');
+            btn.disabled = false; // On active le bouton
+            status.innerHTML = "";
         }
     });
 
     async function convertir() {
-        if (!fileInput.files[0]) {
-            alert("S'il te plaît, choisis d'abord un fichier EPUB !");
-            return;
-        }
-
-        // Vérification de la clé (si tu as oublié de la mettre)
-        if (MA_CLE_SECRETE === 'TON_SECRET_ICI') {
-            alert("Attention : Tu dois modifier le code HTML pour mettre ta propre clé API (voir la ligne 107 du code).");
+        // Vérification basique
+        if (API_SECRET === 'TA_CLE_SECRETE_ICI') {
+            alert("Oups ! Tu as oublié de mettre ta clé API dans le code (ligne 86).");
             return;
         }
 
         const file = fileInput.files[0];
-        
-        // Interface en mode "Chargement"
+        if (!file) return;
+
+        // UI : Chargement
         btn.disabled = true;
-        btn.innerHTML = "⏳ Conversion en cours...";
-        statusDiv.innerHTML = "Upload et traitement... (ça peut prendre 10-20 sec)";
-        statusDiv.style.color = "#666";
+        btn.innerText = "Envoi et conversion...";
+        status.innerText = "Patience, la magie opère ☁️...";
 
         try {
-            // 1. Préparation de l'URL ConvertAPI
-            let url = `https://v2.convertapi.com/convert/epub/to/pdf?Secret=${MA_CLE_SECRETE}`;
-
-            // 2. Préparation du fichier
+            // Préparation des données pour l'API
             let formData = new FormData();
             formData.append('File', file);
+            formData.append('StoreFile', 'true'); // Stocker temporairement pour générer un lien
 
-            // 3. Envoi à l'API (Tout se passe ici)
-            let response = await fetch(url, {
+            // Appel à l'API (Fetch)
+            let response = await fetch(`https://v2.convertapi.com/convert/epub/to/pdf?Secret=${API_SECRET}`, {
                 method: 'POST',
                 body: formData
             });
@@ -164,30 +150,29 @@
             let result = await response.json();
 
             if (result.Files && result.Files.length > 0) {
-                // 4. Succès ! On récupère le lien du PDF
+                // SUCCÈS
                 let pdfUrl = result.Files[0].Url;
                 
-                statusDiv.innerHTML = "";
-                btn.style.display = 'none'; // Cacher le bouton convertir
-
-                // Créer le bouton de téléchargement
-                let downloadLink = document.createElement('a');
-                downloadLink.href = pdfUrl;
-                downloadLink.className = 'success-link';
-                downloadLink.innerHTML = "⬇️ Télécharger mon PDF";
-                downloadLink.target = "_blank"; // Ouvrir dans un nouvel onglet
+                status.innerHTML = "";
+                btn.innerText = "Terminé !";
                 
-                statusDiv.appendChild(downloadLink);
+                // Afficher le bouton de téléchargement
+                let link = document.createElement('a');
+                link.href = pdfUrl;
+                link.className = 'download-link';
+                link.innerText = "⬇️ Télécharger le PDF";
+                status.appendChild(link);
+                
             } else {
-                throw new Error("L'API n'a pas renvoyé de fichier.");
+                throw new Error(result.Message || "Erreur inconnue de l'API");
             }
 
         } catch (error) {
             console.error(error);
-            statusDiv.innerHTML = "❌ Erreur : " + error.message;
-            statusDiv.style.color = "red";
+            status.innerText = "❌ Erreur : " + error.message;
+            status.style.color = "red";
             btn.disabled = false;
-            btn.innerHTML = "Réessayer";
+            btn.innerText = "Réessayer";
         }
     }
 </script>
