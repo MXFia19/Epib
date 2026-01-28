@@ -2,87 +2,194 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Convertisseur EPUB vers PDF</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Convertisseur Mobile EPUB > PDF</title>
     <style>
+        /* Design adapté aux téléphones */
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background-color: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f4f9;
             margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
         }
-        .container {
+
+        .card {
             background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 30px 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
             text-align: center;
-            width: 350px;
         }
-        h1 { color: #333; font-size: 24px; margin-bottom: 20px; }
-        .upload-box {
-            border: 2px dashed #ccc;
-            padding: 30px;
-            border-radius: 8px;
+
+        h1 { margin-top: 0; color: #333; font-size: 1.5rem; }
+        p { color: #666; font-size: 0.9rem; margin-bottom: 25px; }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
             margin-bottom: 20px;
-            cursor: pointer;
-            transition: border-color 0.3s;
         }
-        .upload-box:hover { border-color: #007bff; }
-        input[type="file"] { display: none; }
-        label { cursor: pointer; color: #555; display: block; }
-        button {
+
+        .btn-select {
+            border: 2px dashed #007bff;
+            color: #007bff;
+            background-color: #f0f8ff;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            display: block;
+            cursor: pointer;
+        }
+
+        input[type=file] {
+            font-size: 100px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+
+        button#convertBtn {
             background-color: #007bff;
             color: white;
             border: none;
-            padding: 12px 25px;
-            border-radius: 6px;
-            font-size: 16px;
-            cursor: pointer;
+            padding: 15px;
             width: 100%;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
             transition: background 0.3s;
         }
-        button:hover { background-color: #0056b3; }
-        #status { margin-top: 15px; font-size: 14px; color: #666; }
+
+        button#convertBtn:disabled { background-color: #ccc; }
+
+        #status { margin-top: 20px; font-size: 0.9rem; min-height: 20px; }
+        
+        .success-link {
+            display: block;
+            margin-top: 15px;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>📚 EPUB vers PDF</h1>
-    <form id="convertForm" action="/convert" method="POST" enctype="multipart/form-data">
-        <div class="upload-box" onclick="document.getElementById('epubFile').click()">
-            <input type="file" name="epubFile" id="epubFile" accept=".epub" required onchange="updateLabel()">
-            <label for="epubFile" id="fileLabel">Clique ici pour choisir un EPUB</label>
-        </div>
-        <button type="submit" id="btnSubmit">Convertir maintenant</button>
-    </form>
+<div class="card">
+    <h1>📱 EPUB vers PDF</h1>
+    <p>Convertis tes livres directement depuis ton téléphone.</p>
+
+    <div class="file-input-wrapper">
+        <div class="btn-select" id="labelFile">Taper ici pour choisir un fichier</div>
+        <input type="file" id="fileInput" accept=".epub">
+    </div>
+
+    <input type="text" id="apiKey" placeholder="Colle ta clé secrète ici" style="width: 100%; padding: 10px; margin-bottom: 15px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 8px; display:none;"> 
+    
+    <button id="convertBtn" onclick="convertir()">Convertir maintenant</button>
+    
     <div id="status"></div>
 </div>
 
 <script>
-    function updateLabel() {
-        const input = document.getElementById('epubFile');
-        const label = document.getElementById('fileLabel');
-        if (input.files.length > 0) {
-            label.textContent = "Fichier : " + input.files[0].name;
-            label.style.fontWeight = "bold";
-            label.style.color = "#007bff";
+    // ⚠️ IMPORTANT : Remplace 'TON_SECRET_ICI' par ta clé gratuite ConvertAPI
+    // Tu peux en avoir une gratuite sur https://www.convertapi.com/
+    const MA_CLE_SECRETE = 'd2ITJqf65NNhFvJwHCFmHI3G5YYBrHuv'; 
+
+    const fileInput = document.getElementById('fileInput');
+    const labelFile = document.getElementById('labelFile');
+    const statusDiv = document.getElementById('status');
+    const btn = document.getElementById('convertBtn');
+
+    // Mettre à jour le texte quand on choisit un fichier
+    fileInput.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            labelFile.innerHTML = "📄 " + this.files[0].name;
+            labelFile.style.borderStyle = "solid";
+            labelFile.style.backgroundColor = "#e8f0fe";
+        }
+    });
+
+    async function convertir() {
+        if (!fileInput.files[0]) {
+            alert("S'il te plaît, choisis d'abord un fichier EPUB !");
+            return;
+        }
+
+        // Vérification de la clé (si tu as oublié de la mettre)
+        if (MA_CLE_SECRETE === 'TON_SECRET_ICI') {
+            alert("Attention : Tu dois modifier le code HTML pour mettre ta propre clé API (voir la ligne 107 du code).");
+            return;
+        }
+
+        const file = fileInput.files[0];
+        
+        // Interface en mode "Chargement"
+        btn.disabled = true;
+        btn.innerHTML = "⏳ Conversion en cours...";
+        statusDiv.innerHTML = "Upload et traitement... (ça peut prendre 10-20 sec)";
+        statusDiv.style.color = "#666";
+
+        try {
+            // 1. Préparation de l'URL ConvertAPI
+            let url = `https://v2.convertapi.com/convert/epub/to/pdf?Secret=${MA_CLE_SECRETE}`;
+
+            // 2. Préparation du fichier
+            let formData = new FormData();
+            formData.append('File', file);
+
+            // 3. Envoi à l'API (Tout se passe ici)
+            let response = await fetch(url, {
+                method: 'POST',
+                body: formData
+            });
+
+            let result = await response.json();
+
+            if (result.Files && result.Files.length > 0) {
+                // 4. Succès ! On récupère le lien du PDF
+                let pdfUrl = result.Files[0].Url;
+                
+                statusDiv.innerHTML = "";
+                btn.style.display = 'none'; // Cacher le bouton convertir
+
+                // Créer le bouton de téléchargement
+                let downloadLink = document.createElement('a');
+                downloadLink.href = pdfUrl;
+                downloadLink.className = 'success-link';
+                downloadLink.innerHTML = "⬇️ Télécharger mon PDF";
+                downloadLink.target = "_blank"; // Ouvrir dans un nouvel onglet
+                
+                statusDiv.appendChild(downloadLink);
+            } else {
+                throw new Error("L'API n'a pas renvoyé de fichier.");
+            }
+
+        } catch (error) {
+            console.error(error);
+            statusDiv.innerHTML = "❌ Erreur : " + error.message;
+            statusDiv.style.color = "red";
+            btn.disabled = false;
+            btn.innerHTML = "Réessayer";
         }
     }
-
-    // Petit script pour gérer l'animation de chargement
-    document.getElementById('convertForm').onsubmit = function() {
-        const btn = document.getElementById('btnSubmit');
-        const status = document.getElementById('status');
-        btn.disabled = true;
-        btn.textContent = "Conversion en cours...";
-        btn.style.backgroundColor = "#ccc";
-        status.textContent = "Cela peut prendre quelques secondes...";
-    };
 </script>
 
 </body>
